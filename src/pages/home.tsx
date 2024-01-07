@@ -1,9 +1,9 @@
 import type { FC } from "hono/jsx";
-import { src_pages_home } from "../../dist/style-modules";
+import { src_pages_home as styles } from "../../dist/style-modules";
 
 export const Page: FC = (props) => {
   return (
-    <main class={src_pages_home.home}>
+    <main class={styles.home}>
       {props.posts.map((post: any) => (
         <article>
           <h2>

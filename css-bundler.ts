@@ -1,6 +1,7 @@
 import { globby } from "globby";
 import { bundle } from "lightningcss";
 import * as fs from "node:fs/promises";
+import { writeFileSync } from "node:fs";
 
 export async function bundleCssModules() {
   const paths = await globby("**/**.module.css", {
@@ -47,6 +48,6 @@ export async function bundleCssModules() {
     })
     .join("\n");
 
-  await fs.writeFile("dist/style-modules.ts", bundleExports);
-  await fs.writeFile("dist/bundle.min.css", bundleCode);
+  writeFileSync("dist/style-modules.ts", bundleExports);
+  writeFileSync("dist/bundle.min.css", bundleCode);
 }

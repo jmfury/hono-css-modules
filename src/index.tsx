@@ -3,6 +3,7 @@ import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
 import { html } from "hono/html";
 import { Page } from "./pages/home";
+import { Page as AboutPage } from "./pages/about/page";
 
 const app = new Hono();
 
@@ -35,6 +36,13 @@ const Home = (props: { siteData: SiteData; name: string; posts: Post[] }) => (
   <Layout {...props.siteData}>
     <h1>Hello {props.name}</h1>
     <Page posts={props.posts} />
+    <a href="/about">About</a>
+  </Layout>
+);
+
+const About = (props: { siteData: SiteData }) => (
+  <Layout {...props.siteData}>
+    <AboutPage />
   </Layout>
 );
 
@@ -59,6 +67,16 @@ app.get("/", (c) => {
     ],
   };
   return c.html(<Home {...props} />);
+});
+
+app.get("/about", (c) => {
+  const props = {
+    siteData: {
+      title: "About",
+      description: "About Hono",
+    },
+  };
+  return c.html(<About {...props} />);
 });
 
 app.use(
