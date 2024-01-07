@@ -2,7 +2,7 @@ import { globby } from "globby";
 import { bundle } from "lightningcss";
 import * as fs from "node:fs/promises";
 
-async function bundleCssModules() {
+export async function bundleCssModules() {
   const paths = await globby("**/**.module.css", {
     expandDirectories: true,
   });
@@ -50,5 +50,3 @@ async function bundleCssModules() {
   await fs.writeFile("dist/style-modules.ts", bundleExports);
   await fs.writeFile("dist/bundle.min.css", bundleCode);
 }
-
-export { bundleCssModules };

@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "dev": "tsx watch src/index.tsx --ignore dist/bundle.min.css"
+    "dev": "tsx watch src/index.tsx"
   },
   "dependencies": {
     "@hono/node-server": "^1.3.5",
