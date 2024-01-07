@@ -1,0 +1,1 @@
+export const src_pages_home: { [x: string]: any; } = {"home":"vRzsIW_home"};
