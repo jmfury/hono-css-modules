@@ -1,5 +1,7 @@
 import type { FC } from "hono/jsx";
-import { src_pages_about_style as styles } from "../../../dist/style-modules";
+// import { src_pages_about_style as styles } from "../../../dist/style-modules";
+import { bundleCssModule } from "@cssmodule";
+const { styles } = bundleCssModule({ path: __dirname + "/style.module.css" });
 
 export const Page: FC = () => {
   return (

@@ -4,8 +4,15 @@ import { Hono } from "hono";
 import { html } from "hono/html";
 import { Page } from "./pages/home";
 import { Page as AboutPage } from "./pages/about/page";
+import { bundleCss, clearCss } from "@cssmodule";
+
+if (process.env.NODE_ENV === "development") {
+  clearCss({ dir: "dist" });
+}
 
 const app = new Hono();
+
+bundleCss({ dir: "dist" });
 
 interface SiteData {
   title: string;

@@ -1,10 +1,42 @@
 import { globby } from "globby";
 import { bundle } from "lightningcss";
 import * as fs from "node:fs/promises";
-import { writeFileSync } from "node:fs";
+import { writeFileSync, readFileSync } from "node:fs";
 
-export async function bundleCssModules() {
-  const paths = await globby("**/**.module.css", {
+export function bundleCssModule({ path }) {
+  const file = readFileSync(path);
+  const spec = {
+    filename: path,
+    code: Buffer.from(file),
+    minify: true,
+    sourceMap: true,
+    cssModules: true,
+  };
+  const { code, exports: cssExports } = bundle(spec);
+
+  writeFileSync(`dist/${path.replace(/\//g, "_")}`, code);
+
+  const styles: { [x: string]: string } = Object.keys(
+    cssExports as object
+  ).reduce((acc, next) => ({ ...acc, [next]: cssExports[next].name }), {});
+
+  return { styles };
+}
+
+export async function clearCss({ dir }) {
+  const paths = await globby(dir ? `${dir}/*.module.css` : "**/**.module.css", {
+    expandDirectories: true,
+  });
+  const listToClear = [];
+
+  // Delete all produced css module files
+  for (const path of paths) {
+    listToClear.push(fs.unlink(path));
+  }
+}
+
+export async function bundleCss({ dir }) {
+  const paths = await globby(dir ? `${dir}/*.module.css` : "**/**.module.css", {
     expandDirectories: true,
   });
   const bundleList = [];
@@ -15,7 +47,6 @@ export async function bundleCssModules() {
       code: Buffer.from(file),
       minify: true,
       sourceMap: true,
-      cssModules: true,
     };
     const bundled = bundle(spec);
     bundleList.push({ [path]: bundled });
@@ -29,25 +60,5 @@ export async function bundleCssModules() {
     })
     .join("");
 
-  const bundleExports = bundleList
-    .map((b) => {
-      const [path] = Object.keys(b);
-      const { exports: cssExports } = b[path];
-      const str = `export const ${path
-        .replace(/\//g, "_")
-        .replace(
-          /\.module\.css/g,
-          ""
-        )}: { [x: string]: any; } = ${JSON.stringify({
-        ...Object.keys(cssExports).reduce(
-          (acc, next) => ({ ...acc, [next]: cssExports[next].name }),
-          {}
-        ),
-      })};`;
-      return str;
-    })
-    .join("\n");
-
-  writeFileSync("dist/style-modules.ts", bundleExports);
   writeFileSync("dist/bundle.min.css", bundleCode);
 }
