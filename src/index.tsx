@@ -6,7 +6,6 @@ import { Page } from "./pages/home";
 import { Page as AboutPage } from "./pages/about/page";
 import { bundleCss, clearCss } from "@cssmodule";
 import { Style, css } from "hono/css";
-import { Style as Style2 } from "../css-modules";
 
 if (process.env.NODE_ENV === "development") {
   clearCss({ dir: "dist" });
@@ -47,7 +46,6 @@ const headingCss = css`
 const Home = (props: { siteData: SiteData; name: string; posts: Post[] }) => (
   <Layout {...props.siteData}>
     <Style />
-    <Style2 />
     <h1 class={headingCss}>Hello {props.name}</h1>
     <Page posts={props.posts} />
     <a href="/about">About</a>

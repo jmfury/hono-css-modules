@@ -1,4 +1,14 @@
 .home {
+  font-size: 1rem;
+}
+
+.layout {
+  composes: home;
   display: grid;
+}
+
+.foo {
+  composes: home;
+  composes: layout;
   color: red;
 }

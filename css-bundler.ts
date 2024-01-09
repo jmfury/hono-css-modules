@@ -15,10 +15,14 @@ export function bundleCssModule({ path }) {
   const { code, exports: cssExports } = bundle(spec);
 
   writeFileSync(`dist/${path.replace(/\//g, "_")}`, code);
-
-  const styles: { [x: string]: string } = Object.keys(
-    cssExports as object
-  ).reduce((acc, next) => ({ ...acc, [next]: cssExports[next].name }), {});
+  const keys = Object.keys(cssExports as object);
+  const styles: { [x: string]: string } = keys.reduce((acc, next) => {
+    const className = `${cssExports[next].name} ${cssExports[next].composes
+      .map((c) => c.name)
+      .join(" ")}`;
+    acc[next] = className;
+    return acc;
+  }, {});
 
   return { styles };
 }
