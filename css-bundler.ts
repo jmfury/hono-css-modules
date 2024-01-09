@@ -1,9 +1,40 @@
-import { globby } from "globby";
 import { bundle } from "lightningcss";
-import * as fs from "node:fs/promises";
-import { writeFileSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
+import { raw } from "hono/html";
 
-export function bundleCssModule({ path }) {
+let cssMap = new Map();
+
+export const bundleCss = () => {
+  const paths = Array.from(cssMap.keys());
+
+  const bundleList = [];
+  for (const path of paths) {
+    const file = cssMap.get(path);
+
+    const spec = {
+      filename: path,
+      code: Buffer.from(file),
+      minify: true,
+      cssModules: true,
+      sourceMap: true,
+    };
+    const bundled = bundle(spec);
+
+    bundleList.push({ [path]: bundled });
+  }
+
+  const bundleCode = bundleList
+    .map((b) => {
+      const [path] = Object.keys(b);
+      const { code } = b[path];
+      return code;
+    })
+    .join("");
+
+  return bundleCode;
+};
+
+function bundleCssModule({ path }) {
   const file = readFileSync(path);
   const spec = {
     filename: path,
@@ -13,8 +44,8 @@ export function bundleCssModule({ path }) {
     cssModules: true,
   };
   const { code, exports: cssExports } = bundle(spec);
+  cssMap.set(path, code);
 
-  writeFileSync(`dist/${path.replace(/\//g, "_")}`, code);
   const keys = Object.keys(cssExports as object);
   const styles: { [x: string]: string } = keys.reduce((acc, next) => {
     const className = `${cssExports[next].name} ${cssExports[next].composes
@@ -27,42 +58,14 @@ export function bundleCssModule({ path }) {
   return { styles };
 }
 
-export async function clearCss({ dir }) {
-  const paths = await globby(dir ? `${dir}/*.module.css` : "**/**.module.css", {
-    expandDirectories: true,
-  });
-  const listToClear = [];
+const id = "hono-css-modules";
 
-  // Delete all produced css module files
-  for (const path of paths) {
-    listToClear.push(fs.unlink(path));
-  }
-}
+export const Style = () => {
+  return raw(`<style id="${id}">${bundleCss()}</style>`);
+};
 
-export async function bundleCss({ dir }) {
-  const paths = await globby(dir ? `${dir}/*.module.css` : "**/**.module.css", {
-    expandDirectories: true,
-  });
-  const bundleList = [];
-  for (const path of paths) {
-    const file = await fs.readFile(path);
-    const spec = {
-      filename: path,
-      code: Buffer.from(file),
-      minify: true,
-      sourceMap: true,
-    };
-    const bundled = bundle(spec);
-    bundleList.push({ [path]: bundled });
-  }
+export { cssMap, bundleCssModule };
 
-  const bundleCode = bundleList
-    .map((b) => {
-      const [path] = Object.keys(b);
-      const { code } = b[path];
-      return code;
-    })
-    .join("");
-
-  writeFileSync("dist/bundle.min.css", bundleCode);
+export async function clearCss() {
+  cssMap = new Map();
 }
