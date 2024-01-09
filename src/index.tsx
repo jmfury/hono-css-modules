@@ -5,6 +5,8 @@ import { html } from "hono/html";
 import { Page } from "./pages/home";
 import { Page as AboutPage } from "./pages/about/page";
 import { bundleCss, clearCss } from "@cssmodule";
+import { Style, css } from "hono/css";
+import { Style as Style2 } from "../css-modules";
 
 if (process.env.NODE_ENV === "development") {
   clearCss({ dir: "dist" });
@@ -39,9 +41,14 @@ interface Post {
   excerpt: string;
 }
 
+const headingCss = css`
+  color: red;
+`;
 const Home = (props: { siteData: SiteData; name: string; posts: Post[] }) => (
   <Layout {...props.siteData}>
-    <h1>Hello {props.name}</h1>
+    <Style />
+    <Style2 />
+    <h1 class={headingCss}>Hello {props.name}</h1>
     <Page posts={props.posts} />
     <a href="/about">About</a>
   </Layout>
