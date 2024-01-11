@@ -1,6 +1,8 @@
 import { bundle } from "lightningcss";
 import { readFileSync } from "node:fs";
 import { raw } from "hono/html";
+import { resolve } from "node:path";
+import parentModule from "parent-module";
 
 let cssMap = new Map();
 
@@ -30,21 +32,38 @@ export const bundleCss = () => {
       return code;
     })
     .join("");
-
   return bundleCode;
 };
 
-function bundleCssModule({ path }) {
-  const file = readFileSync(path);
+function bundleCssModule(path) {
+  // Get the parent module
+  const parent = parentModule().replace("file:", "");
+  const parentDir = parent.replace(/\/[^/]+$/, "");
+  // Check if path is relative or absolute
+  const isRelativePath = path.startsWith(".");
+  const isAbsolutePath = path.startsWith("/");
+  if (!isRelativePath && !isAbsolutePath) {
+    throw new Error(`Path must be relative or absolute, got ${path} instead.`);
+  }
+
+  // Resolve the path
+  const readablePath = isRelativePath ? resolve(parentDir, path) : path;
+
+  // Read the file
+  const file = readFileSync(readablePath);
+
   const spec = {
-    filename: path,
+    filename: readablePath,
     code: Buffer.from(file),
     minify: true,
     sourceMap: true,
     cssModules: true,
   };
-  const { code, exports: cssExports } = bundle(spec);
-  cssMap.set(path, code);
+
+  const res = bundle(spec);
+  const { code, exports: cssExports } = res;
+
+  cssMap.set(readablePath, code);
 
   const keys = Object.keys(cssExports as object);
   const styles: { [x: string]: string } = keys.reduce((acc, next) => {

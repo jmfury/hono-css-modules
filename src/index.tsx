@@ -1,5 +1,4 @@
 import { serve } from "@hono/node-server";
-import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
 import { html } from "hono/html";
 import { Page } from "./pages/home";
@@ -52,6 +51,7 @@ const Home = (props: { siteData: SiteData; name: string; posts: Post[] }) => (
 
 const About = (props: { siteData: SiteData }) => (
   <Layout {...props.siteData}>
+    <CssModuleStyle />
     <AboutPage />
   </Layout>
 );

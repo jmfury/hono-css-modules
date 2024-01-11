@@ -1,6 +1,6 @@
 import type { FC } from "hono/jsx";
 import { bundleCssModule } from "@cssmodule";
-const { styles } = bundleCssModule({ path: __dirname + "/home.module.css" });
+const { styles } = bundleCssModule("./home.module.css");
 
 export const Page: FC = async (props) => {
   return (
