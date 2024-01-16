@@ -1,12 +1,12 @@
 import type { FC } from "hono/jsx";
 import { bundleCssModule } from "@cssmodule";
-const { styles } = bundleCssModule({ path: __dirname + "/home.module.css" });
+const { styles } = bundleCssModule("./home.module.css");
 
-export const Page: FC = (props) => {
+export const Page: FC = async (props) => {
   return (
-    <main class={styles.home}>
+    <main>
       {props.posts.map((post: any) => (
-        <article>
+        <article class={styles.foo}>
           <h2 data-fine="true">
             <a href={`/posts/${post.slug}`}>{post.title}</a>
           </h2>

@@ -1,18 +1,16 @@
 import { serve } from "@hono/node-server";
-import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
 import { html } from "hono/html";
 import { Page } from "./pages/home";
 import { Page as AboutPage } from "./pages/about/page";
-import { bundleCss, clearCss } from "@cssmodule";
+import { clearCss, Style as CssModuleStyle } from "@cssmodule";
+import { Style, css } from "hono/css";
 
 if (process.env.NODE_ENV === "development") {
-  clearCss({ dir: "dist" });
+  clearCss();
 }
 
 const app = new Hono();
-
-bundleCss({ dir: "dist" });
 
 interface SiteData {
   title: string;
@@ -25,7 +23,6 @@ const Layout = (props: SiteData) => html`
     <head>
       <title>${props.title}</title>
       <meta name="description" content="${props.description}" />
-      <link rel="stylesheet" href="/static/bundle.min.css" />
     </head>
     <body>
       ${props.children}
@@ -39,9 +36,14 @@ interface Post {
   excerpt: string;
 }
 
+const headingCss = css`
+  color: red;
+`;
 const Home = (props: { siteData: SiteData; name: string; posts: Post[] }) => (
   <Layout {...props.siteData}>
-    <h1>Hello {props.name}</h1>
+    <Style />
+    <CssModuleStyle />
+    <h1 class={headingCss}>Hello {props.name}</h1>
     <Page posts={props.posts} />
     <a href="/about">About</a>
   </Layout>
@@ -49,6 +51,7 @@ const Home = (props: { siteData: SiteData; name: string; posts: Post[] }) => (
 
 const About = (props: { siteData: SiteData }) => (
   <Layout {...props.siteData}>
+    <CssModuleStyle />
     <AboutPage />
   </Layout>
 );
@@ -85,13 +88,5 @@ app.get("/about", (c) => {
   };
   return c.html(<About {...props} />);
 });
-
-app.use(
-  "/static/*",
-  serveStatic({
-    root: "./",
-    rewriteRequestPath: (path) => path.replace(/^\/static/, "/dist"),
-  })
-);
 
 serve(app);

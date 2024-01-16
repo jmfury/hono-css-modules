@@ -1,54 +1,27 @@
-import { globby } from "globby";
 import { bundle } from "lightningcss";
-import * as fs from "node:fs/promises";
-import { writeFileSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
+import { raw } from "hono/html";
+import { resolve } from "node:path";
+import parentModule from "parent-module";
 
-export function bundleCssModule({ path }) {
-  const file = readFileSync(path);
-  const spec = {
-    filename: path,
-    code: Buffer.from(file),
-    minify: true,
-    sourceMap: true,
-    cssModules: true,
-  };
-  const { code, exports: cssExports } = bundle(spec);
+let cssMap = new Map();
 
-  writeFileSync(`dist/${path.replace(/\//g, "_")}`, code);
+export const bundleCss = () => {
+  const paths = Array.from(cssMap.keys());
 
-  const styles: { [x: string]: string } = Object.keys(
-    cssExports as object
-  ).reduce((acc, next) => ({ ...acc, [next]: cssExports[next].name }), {});
-
-  return { styles };
-}
-
-export async function clearCss({ dir }) {
-  const paths = await globby(dir ? `${dir}/*.module.css` : "**/**.module.css", {
-    expandDirectories: true,
-  });
-  const listToClear = [];
-
-  // Delete all produced css module files
-  for (const path of paths) {
-    listToClear.push(fs.unlink(path));
-  }
-}
-
-export async function bundleCss({ dir }) {
-  const paths = await globby(dir ? `${dir}/*.module.css` : "**/**.module.css", {
-    expandDirectories: true,
-  });
   const bundleList = [];
   for (const path of paths) {
-    const file = await fs.readFile(path);
+    const file = cssMap.get(path);
+
     const spec = {
       filename: path,
       code: Buffer.from(file),
       minify: true,
+      cssModules: true,
       sourceMap: true,
     };
     const bundled = bundle(spec);
+
     bundleList.push({ [path]: bundled });
   }
 
@@ -59,6 +32,59 @@ export async function bundleCss({ dir }) {
       return code;
     })
     .join("");
+  return bundleCode;
+};
 
-  writeFileSync("dist/bundle.min.css", bundleCode);
+function bundleCssModule(path) {
+  // Get the parent module
+  const parent = parentModule().replace("file:", "");
+  const parentDir = parent.replace(/\/[^/]+$/, "");
+  // Check if path is relative or absolute
+  const isRelativePath = path.startsWith(".");
+  const isAbsolutePath = path.startsWith("/");
+  if (!isRelativePath && !isAbsolutePath) {
+    throw new Error(`Path must be relative or absolute, got ${path} instead.`);
+  }
+
+  // Resolve the path
+  const readablePath = isRelativePath ? resolve(parentDir, path) : path;
+
+  // Read the file
+  const file = readFileSync(readablePath);
+
+  const spec = {
+    filename: readablePath,
+    code: Buffer.from(file),
+    minify: true,
+    sourceMap: true,
+    cssModules: true,
+  };
+
+  const res = bundle(spec);
+  const { code, exports: cssExports } = res;
+
+  cssMap.set(readablePath, code);
+
+  const keys = Object.keys(cssExports as object);
+  const styles: { [x: string]: string } = keys.reduce((acc, next) => {
+    const className = `${cssExports[next].name} ${cssExports[next].composes
+      .map((c) => c.name)
+      .join(" ")}`;
+    acc[next] = className;
+    return acc;
+  }, {});
+
+  return { styles };
+}
+
+const id = "hono-css-modules";
+
+export const Style = () => {
+  return raw(`<style id="${id}">${bundleCss()}</style>`);
+};
+
+export { cssMap, bundleCssModule };
+
+export async function clearCss() {
+  cssMap = new Map();
 }
